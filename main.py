@@ -247,7 +247,7 @@ def button(update: Update, context: CallbackContext):
 
 # Основной блок для запуска бота
 def main():
-    updater = Updater("7618830849:AAHtQNbOfg-J2--Hnf-6aOFI8ZkzgW_Nuts", use_context=True)
+    updater = Updater("", use_context=True)
     dp = updater.dispatcher
 
     # Команда /start
