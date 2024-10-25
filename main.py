@@ -140,7 +140,7 @@ words = {
     "отозвалАсь": "отозвАлась",
     "перезвонИт": "перезвОнит",
     "перелилА": "перелИла",
-    "плодоносИть": "плодоносИть",
+    "плодоносИть": "плодонОсить",
     "пломбировАть": "пломбирОвать",
     "повторИт": "повтОрит",
     "позвалА": "позвАла",
@@ -187,26 +187,28 @@ words = {
     "начАта": "нАчата",
 }
 
-
-
-
-
 # Обработка команды /start
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("Привет! Я проверю твои знания ударений. Начнем тест!")
-    file_path = r'home/root'  # Используем raw string
 
 
-    # Отправляем файл
-    update.message.reply_document(document=open(file_path, 'rb'))
-    # Инициализируем счётчик правильных ответов
+    # Инициализируем счётчик правильных ответов и копируем слова для текущей сессии
     context.user_data['score'] = 0
+    context.user_data['remaining_words'] = list(words.items())
     # Запускаем первый вопрос
     ask_question(update, context)
 
 def ask_question(update: Update, context: CallbackContext):
-    word, wrong_accent = random.choice(list(words.items()))
+    # Проверка, остались ли слова для вопросов
+    if not context.user_data['remaining_words']:
+        update.message.reply_text("Тест завершен! Молодец!")
+        return
+
+    word, wrong_accent = random.choice(context.user_data['remaining_words'])
     correct_answer = word
+
+    # Удаляем использованное слово
+    context.user_data['remaining_words'].remove((word, wrong_accent))
 
     # Создание кнопок
     buttons = [
@@ -220,7 +222,7 @@ def ask_question(update: Update, context: CallbackContext):
     # Отправка вопроса
     context.user_data['correct_word'] = correct_answer
     update.message.reply_text(
-        f"Выберите правильное ударение в слове: {word.replace('О', 'о').replace('А', 'а').replace('Е', 'е')}",
+        f"Выберите правильное ударение в слове: ",
         reply_markup=reply_markup
     )
 
@@ -235,15 +237,17 @@ def button(update: Update, context: CallbackContext):
         query.edit_message_text(text=f"✅ Правильно!\n"
                                       f"Правильные ответы: {context.user_data['score']}")
     else:
-        context.user_data['score'] = 0  # Сбрасываем счётчик при неправильном ответе
-        query.edit_message_text(text=f"❌ Неправильно. Правильный ответ: {correct_answer}")
+        # Сбрасываем счётчик и восстанавливаем список слов при неправильном ответе
+        context.user_data['score'] = 0
+        context.user_data['remaining_words'] = list(words.items())
+        query.edit_message_text(text=f"❌ Неправильно. Правильный ответ: {correct_answer}\nНачнем сначала!")
 
     # Запускаем следующий вопрос
     ask_question(query, context)
 
 # Основной блок для запуска бота
 def main():
-    updater = Updater("", use_context=True)
+    updater = Updater("7618830849:AAHtQNbOfg-J2--Hnf-6aOFI8ZkzgW_Nuts", use_context=True)
     dp = updater.dispatcher
 
     # Команда /start
